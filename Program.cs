@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace FixMameMsvc
@@ -55,6 +54,19 @@ namespace FixMameMsvc
 			return changed;
 		}
 
+		private static bool RemoveNodes(XmlDocument xmlDoc, string xPath)
+		{
+			List<XmlNode> nodes = xmlDoc.SelectNodes(xPath, _nsMgr).Cast<XmlNode>().ToList();
+			foreach(var node in nodes)
+			{
+				node.ParentNode.RemoveChild(node);
+			}
+			return nodes.Count > 0;
+		}
+
+		/// <summary>
+		/// Applies fixes to a VS Project (*.vcxproj)
+		/// </summary>
 		private static void FixProject(string fileName)
 		{
 			var xmlDoc = new XmlDocument(_nsMgr.NameTable);
@@ -67,9 +79,19 @@ namespace FixMameMsvc
 				changed = true;
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:PropertyGroup/ms:PlatformToolset", null, "ClangCL"))
 				changed = true;
+			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:WarningLevel", null, "Level4"))
+				changed = true;
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:TreatWarningAsError", null, "false"))
 				changed = true;
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile", "LanguageStandard", "stdcpp17"))
+				changed = true;
+			if (RemoveNodes(xmlDoc, "//*[@Include='Debug|Win32']"))
+				changed = true;
+			if (RemoveNodes(xmlDoc, "//*[@Include='Release|Win32']"))
+				changed = true;
+			if (RemoveNodes(xmlDoc, "//*[@Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\"]"))
+				changed = true;
+			if (RemoveNodes(xmlDoc, "//*[@Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\"]"))
 				changed = true;
 
 			// Special case for portaudio.vcxproj
@@ -118,6 +140,19 @@ namespace FixMameMsvc
 			}
 		}
 
+		/// <summary>
+		/// Applies fixes to a VS Solution (*.sln)
+		/// </summary>
+		private static void FixSolution(string fileName)
+		{
+			string[] lines = File.ReadAllLines(fileName);
+			string[] newLines = lines.Where(x => !x.Contains("Win32")).ToArray();
+			File.WriteAllLines(fileName, newLines);
+		}
+
+		/// <summary>
+		/// Applies fixes to a directory
+		/// </summary>
 		private static void FixDirectory(string directory)
 		{
 			foreach(var file in Directory.GetFiles(directory, "*.vcxproj"))
@@ -125,12 +160,20 @@ namespace FixMameMsvc
 				FixProject(file);
 			}
 
-			foreach(var subDirectory in Directory.GetDirectories(directory))
+			foreach (var file in Directory.GetFiles(directory, "*.sln"))
+			{
+				FixSolution(file);
+			}
+
+			foreach (var subDirectory in Directory.GetDirectories(directory))
 			{
 				FixDirectory(subDirectory);
 			}
 		}
 
+		/// <summary>
+		/// Main entry point
+		/// </summary>
 		static void Main(string[] args)
 		{
 			FixDirectory(args[0]);
