@@ -19,7 +19,7 @@ namespace FixMameMsvc
 			return result;
 		}
 
-		private static bool ApplyFix(XmlDocument xmlDoc, string xPath, string childNode, string newInnerText)
+		private static bool ApplyFix(XmlDocument xmlDoc, string xPath, string childNode, string newInnerText, bool append = false)
 		{
 			bool changed = false;
 			foreach(XmlNode node in xmlDoc.SelectNodes(xPath, _nsMgr))
@@ -48,7 +48,14 @@ namespace FixMameMsvc
 					nodeToChange = node;
 				}
 
-				nodeToChange.InnerText = newInnerText;
+				if (!append)
+				{
+					nodeToChange.InnerText = newInnerText;
+				}
+				else if (!nodeToChange.InnerText.EndsWith(newInnerText))
+				{
+					nodeToChange.InnerText += newInnerText;
+				}
 				changed = true;
 			}
 			return changed;
@@ -83,6 +90,8 @@ namespace FixMameMsvc
 				changed = true;
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:TreatWarningAsError", null, "false"))
 				changed = true;
+			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:AdditionalOptions", null, " -Wno-error", true))
+				changed = true;			
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile", "LanguageStandard", "stdcpp17"))
 				changed = true;
 			if (RemoveNodes(xmlDoc, "//*[@Include='Debug|Win32']"))
