@@ -82,17 +82,17 @@ namespace FixMameMsvc
 
 			bool changed = false;
 
-			if (ApplyFix(xmlDoc, "/ms:Project/ms:PropertyGroup/ms:WindowsTargetPlatformVersion", null, "10.0.17763.0"))
+			if (ApplyFix(xmlDoc, "/ms:Project/ms:PropertyGroup/ms:WindowsTargetPlatformVersion", null, "10.0.22621.0"))
 				changed = true;
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:PropertyGroup/ms:PlatformToolset", null, "ClangCL"))
 				changed = true;
-			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:WarningLevel", null, "Level4"))
+			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:WarningLevel", null, "TurnOffAllWarnings"))
 				changed = true;
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:TreatWarningAsError", null, "false"))
 				changed = true;
 			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile/ms:AdditionalOptions", null, " -Wno-error", true))
 				changed = true;			
-			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile", "LanguageStandard", "stdcpp17"))
+			if (ApplyFix(xmlDoc, "/ms:Project/ms:ItemDefinitionGroup[@Condition]/ms:ClCompile", "LanguageStandard", "stdcpp20"))
 				changed = true;
 			if (RemoveNodes(xmlDoc, "//*[@Include='Debug|Win32']"))
 				changed = true;
